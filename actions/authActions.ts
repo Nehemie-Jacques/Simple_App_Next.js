@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { setSessionToken } from "@/lib/auth";
 import { redirect } from "next/navigation";
