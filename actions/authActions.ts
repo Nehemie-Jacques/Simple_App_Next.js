@@ -5,39 +5,45 @@ import bcrypt from "bcryptjs";
 import { setSessionToken } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
-export async function signupAction(formatData: FormData) {
-    const email = formatData.get("email") as string;
-    const password = FormData.get("password") as string;
+export async function signupAction(formData: FormData) {
+  const emailValue = formData.get("email");
+  const passwordValue = formData.get("password");
 
-    if (!email || !password) return { error: "All fields are required." };
+  const email = typeof emailValue === "string" ? emailValue.trim() : "";
+  const password = typeof passwordValue === "string" ? passwordValue : "";
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) return { error: "User already exists." };
-    
-    const hashedPassword = await bcrypt.hash(password, 10);
+  if (!email || !password) return { error: "All fields are required." };
 
-    const user = await prisma.user.create({
-        data: { email, password: hashedPassword },
-    });
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) return { error: "User already exists." };
 
-    setSessionToken(user.id);
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-    redirect("/");
+  const user = await prisma.user.create({
+    data: { email, password: hashedPassword },
+  });
+
+  await setSessionToken(user.id);
+
+  redirect("/");
 }
 
 export async function loginAction(formData: FormData) {
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+  const emailValue = formData.get("email");
+  const passwordValue = formData.get("password");
 
-    if (!email || !password) return { error: "All fields are required." };
+  const email = typeof emailValue === "string" ? emailValue.trim() : "";
+  const password = typeof passwordValue === "string" ? passwordValue : "";
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return { error: "Invalid credentials." };
+  if (!email || !password) return { error: "All fields are required." };
 
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return { error: "Invalid credentials." };
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) return { error: "Invalid credentials." };
 
-    setSessionToken(user.id);
+  const valid = await bcrypt.compare(password, user.password);
+  if (!valid) return { error: "Invalid credentials." };
 
-    redirect("/");
+  await setSessionToken(user.id);
+
+  redirect("/");
 }
